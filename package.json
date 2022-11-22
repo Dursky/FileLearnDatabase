@@ -1,0 +1,21 @@
+{
+  "name": "FileLearnDatabase",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/Dursky/FileLearnDatabase.git",
+  "author": "Dursky",
+  "scripts": {
+    "dev": "nodemon --watch './**/*.ts' --exec 'ts-node' src/main.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@types/dotenv": "^8.2.0",
+    "@types/node": "^18.11.9",
+    "dotenv": "^16.0.3",
+    "nodemon": "^2.0.20",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.3",
+    "uuidv4": "^6.2.13"
+  },
+  "devDependencies": {}
+}
