@@ -11,12 +11,15 @@ export const databaseBlueprint: databaseStructure= {
 export const initializeDatabaseFile = async () => {
 
     /* Create empty file or just open */
-    if (process.env.FILE_NAME)   fs.open(process.env.FILE_NAME as string,'w',() => {
-        console.log("Readed database file.")
+   // if (process.env.FILE_NAME)   fs.open(process.env.FILE_NAME as string,'w',() => {
         fs.readFile(process.env.FILE_NAME as string, 'utf-8', (err, readedData) => {
+            console.log("Reading database file...")
+
+            if (!readedData) fs.writeFile(process.env.FILE_NAME as string,'', (err) => console.log({err}))
 
             /* Initial check if file contain any string data */
-            let parsedData: databaseStructure = readedData.length === 0 ? databaseBlueprint : JSON.parse(readedData);
+            let parsedData: databaseStructure = readedData.length > 0 ? JSON.parse(readedData) : databaseBlueprint;
+
 
             /* Validate parsed data - if not correct - just fix it*/
             if (!parsedData.id || !parsedData.databaseName || parsedData.id.length == 0 || parsedData.databaseName.length == 0){
@@ -30,9 +33,10 @@ export const initializeDatabaseFile = async () => {
               return -1
             } 
 
+            /* If everything works fine - just write current data into file*/
             fs.writeFile(process.env.FILE_NAME as string, JSON.stringify(parsedData), (err) => err && console.log({err}))
           })
-    })
-    else throw 'Check FILE_NAME in .env'
+   // })
+  //  else throw 'Check FILE_NAME in .env'
 }
     

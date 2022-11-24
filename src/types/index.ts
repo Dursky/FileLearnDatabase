@@ -1,4 +1,4 @@
-export interface tableObjectsStructure {
+export interface tableChild {
     id: string
     content: string
     /* TODO: Create dynamic schema*/
@@ -7,7 +7,7 @@ export interface tableObjectsStructure {
 export interface tableStructure {
     id: string
     tableName: string
-    tableObjects: tableObjectsStructure[]
+    tableChildren: tableChild[]
 }
 
 export interface databaseStructure {
