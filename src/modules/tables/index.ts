@@ -5,20 +5,19 @@ import {uuid} from "uuidv4";
 export const createTable = async (tableName: string) => {
 	/* Read current tables from file */
 
-	fs.readFile(process.env.FILE_NAME as string, "utf-8", (err, readedData) => {
+	fs.readFile(process.env.FILE_NAME as string, "utf-8", async (err, readedData) => {
 		if (err) {
 			console.error(err);
 			return;
 		}
+
 		const parsedData: databaseStructure = JSON.parse(readedData);
 		const newTable: tableStructure = {id: uuid(), tableName: tableName, tableChildren: []};
 		const contentToSave = {...parsedData, tables: parsedData.tables.concat(newTable)};
 
-		fs.writeFile(
-			process.env.FILE_NAME as string,
-			JSON.stringify(contentToSave),
-			(err) => err && console.log({err}),
-		);
+		fs.writeFileSync(process.env.FILE_NAME as string, JSON.stringify(contentToSave));
+
+		console.log("| Created table");
 	});
 };
 
@@ -61,5 +60,7 @@ export const deleteTable = async (id: string) => {
 			JSON.stringify(contentToSave),
 			(err) => err && console.log({err}),
 		);
+
+		console.log("| Deleted table");
 	});
 };
