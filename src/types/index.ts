@@ -1,17 +1,19 @@
 export interface tableChild {
-    id: string
-    content: string
-    /* TODO: Create dynamic schema*/
+	/* TODO: Create dynamic schema*/
+}
+export interface tableSchema {
+	[key: string]: string;
 }
 
 export interface tableStructure {
-    id: string
-    tableName: string
-    tableChildren: tableChild[]
+	id: string;
+	tableName: string;
+	tableChildren: tableChild[];
+	tableSchema: tableSchema;
 }
 
 export interface databaseStructure {
-    id: string
-    databaseName: string
-    tables: tableStructure[]
+	id: string;
+	databaseName: string;
+	tables: tableStructure[];
 }
