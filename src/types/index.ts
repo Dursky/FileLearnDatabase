@@ -1,5 +1,5 @@
 export interface tableChild {
-	/* TODO: Create dynamic schema*/
+	/* TODO: Create dynamic schema */
 }
 export interface tableSchema {
 	[key: string]: string;

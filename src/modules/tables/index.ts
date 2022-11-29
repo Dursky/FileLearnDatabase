@@ -1,6 +1,7 @@
 import fs from "fs";
 import {tableStructure, databaseStructure} from "../../types";
 import {uuid} from "uuidv4";
+import {areEqualArray} from "../../common";
 
 export const createTable = async (tableName: string, tableSchema: string) => {
 	/* Read current tables from file */
@@ -81,53 +82,61 @@ export const addElementToTable = (tableId: string, fieldsWithValues: string) => 
 		--addElement c4b92817-ca26-4d45-882c-833dc9c4a96e firstName:test1,secondName:test2
 		--addElement c4b92817-ca26-4d45-882c-833dc9c4a96e id:test1,name:test2
 	*/
-	fs.readFile(process.env.FILE_NAME as string, "utf-8", (err, readedData) => {
-		if (err) {
-			console.error(err);
-			return;
-		}
-		const parsedData: databaseStructure = JSON.parse(readedData);
-		/*
+	try {
+		fs.readFile(process.env.FILE_NAME as string, "utf-8", (err, readedData) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			const parsedData: databaseStructure = JSON.parse(readedData);
+			/*
 			Validate data with tableProperties
-		*/
+			*/
 
-		const foundTableById = parsedData.tables.filter((i) => i.id === tableId)[0];
+			const foundTableById = parsedData.tables.filter((i) => i.id === tableId)[0];
+			if (!foundTableById) throw Error(`Not found table by id: ${tableId}`);
 
-		const foundTableByIdKeys = Object.keys(foundTableById.tableSchema);
-		const dataToInsertKeys = Object.keys(Object.assign({}, ...fieldsWithValues));
+			const foundTableByIdSchema = Object.keys(foundTableById.tableSchema);
+			const dataToInsertKeys = Object.keys(Object.assign({}, ...fieldsWithValues));
 
-		/* Warning message if we want to add something to id place */
-		if (dataToInsertKeys.includes("id")) {
-			console.log({
-				message: "WARNING",
-				data: "key 'id' will be ignore cause it is a reserved keyword",
-			});
-		}
+			/* Warning message if we want to add something to id place */
+			if (dataToInsertKeys.includes("id")) {
+				console.log({
+					message: "WARNING",
+					data: "key 'id' will be ignore cause it is a reserved keyword",
+				});
+			}
+			if (!areEqualArray(foundTableByIdSchema, dataToInsertKeys))
+				throw Error(
+					`Provided not correct data in table schema: ${Object.keys(
+						foundTableById.tableSchema,
+					)} provided: ${dataToInsertKeys}`,
+				);
 
-		//console.log(foundTableByIdKeys == dataToInsertKeys, foundTableByIdKeys, dataToInsertKeys);
-		/* TODO: Need to compare two array, next check dataType from properties with input data*/
+			const elementToInsert = {...{id: uuid()}, ...Object.assign({}, ...fieldsWithValues)};
+			foundTableById.tableChildren = foundTableById.tableChildren.concat(elementToInsert);
 
-		const elementToInsert = {...{id: uuid()}, ...Object.assign({}, ...fieldsWithValues)};
-		foundTableById.tableChildren = foundTableById.tableChildren.concat(elementToInsert);
-
-		const contentToSave = {
-			...parsedData,
-			id: uuid(),
-			tables: parsedData.tables.filter((i) => {
-				if (i.id === foundTableById.id) {
-					i = foundTableById;
+			const contentToSave = {
+				...parsedData,
+				id: uuid(),
+				tables: parsedData.tables.filter((i) => {
+					if (i.id === foundTableById.id) {
+						i = foundTableById;
+						return i;
+					}
 					return i;
-				}
-				return i;
-			}),
-		};
+				}),
+			};
 
-		fs.writeFile(
-			process.env.FILE_NAME as string,
-			JSON.stringify(contentToSave),
-			(err) => err && console.log({err}),
-		);
+			fs.writeFile(
+				process.env.FILE_NAME as string,
+				JSON.stringify(contentToSave),
+				(err) => err && console.log({err}),
+			);
 
-		console.log("| Added element into table");
-	});
+			console.log("| Added element into table");
+		});
+	} catch (err) {
+		console.error({message: "Found error", data: err});
+	}
 };
