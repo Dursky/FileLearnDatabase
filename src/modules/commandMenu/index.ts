@@ -1,9 +1,16 @@
 import * as readline from "node:readline/promises";
 import {stdin as input} from "node:process";
-import {createTable, showTable, showTables, deleteTable, addElementToTable} from "../tables";
+import {
+	createTable,
+	showTable,
+	showTables,
+	deleteTable,
+	addElementToTable,
+	removeElementFromTable,
+} from "../tables";
 import {helpCommand} from "../../modules/helpCommand";
 
-const DEBBUGING_MODE = false;
+const DEBBUGING_MODE = true;
 
 export const acceptableCommands = [
 	"help",
@@ -12,6 +19,7 @@ export const acceptableCommands = [
 	"createTable",
 	"deleteTable",
 	"addElement",
+	"removeElement",
 ];
 
 const rl = readline.createInterface({input, terminal: true, output: process.stdout});
@@ -24,14 +32,6 @@ export const commandMenu = async () => {
 	*/
 
 	rl.on("line", (input) => {
-		/*
-		console.log(
-			input
-				.split("--")
-				.map((i) => i.trim().replace(/--/i, ""))
-				.filter((i) => i.length !== 0),
-		);
-		*/
 		const inputArgumentList = input
 			.split("--")
 			.map((i) => i.trim().replace(/--/i, ""))
@@ -39,9 +39,33 @@ export const commandMenu = async () => {
 			.map((i) => {
 				if (i.includes(" ")) {
 					const withSemiclone = i.split(" ").map((i) => {
-						if (i.includes(",")) {
-							return i.split(",").map((k) => ({[k.split(":")[0]]: k.split(":")[1]}));
-						} else return i;
+						console.log(i);
+						//TODO: Get : or , from command
+
+						/*
+							Case 1. name:test,test:test - multiple arguments
+							Case 2. name:test - single argument
+						*/
+
+						switch (i) {
+							/* 
+								For multiple arguments: xxx:yyy,yyy:xxx 
+							*/
+							case ",":
+								return i.split(",").map((k) => ({[k.split(":")[0]]: k.split(":")[1]}));
+
+							/*
+								For single argument: xxx:yyy
+							*/
+							case ":":
+								return {[i.split(":")[0]]: i.split(":")[1]};
+
+							/*
+								If not found arguments - just return the same data
+							*/
+							default:
+								return i;
+						}
 					});
 
 					return withSemiclone;
@@ -87,6 +111,9 @@ export const commandMenu = async () => {
 
 					case "addElement":
 						addElementToTable(firstArgumentValue, secondArgumentValue);
+
+					case "removeElement":
+						removeElementFromTable(firstArgumentValue, secondArgumentValue);
 				}
 			} else {
 				console.log({

@@ -90,7 +90,7 @@ export const addElementToTable = (tableId: string, fieldsWithValues: string) => 
 			}
 			const parsedData: databaseStructure = JSON.parse(readedData);
 			/*
-			Validate data with tableProperties
+				Validate data with tableProperties
 			*/
 
 			const foundTableById = parsedData.tables.filter((i) => i.id === tableId)[0];
@@ -99,7 +99,7 @@ export const addElementToTable = (tableId: string, fieldsWithValues: string) => 
 			const foundTableByIdSchema = Object.keys(foundTableById.tableSchema);
 			const dataToInsertKeys = Object.keys(Object.assign({}, ...fieldsWithValues));
 
-			/* Warning message if we want to add something to id place */
+			/* Warning message if we want to add something to id as a key */
 			if (dataToInsertKeys.includes("id")) {
 				console.log({
 					message: "WARNING",
@@ -139,4 +139,33 @@ export const addElementToTable = (tableId: string, fieldsWithValues: string) => 
 	} catch (err) {
 		console.error({message: "Found error", data: err});
 	}
+};
+
+export const removeElementFromTable = (tableId: string, removeBy: string) => {
+	/*
+		From which table, and what element:
+		caddd5ab-36c2-4308-a2c5-884a27cf472d name:test
+
+		 --removeElement 631e8499-e7a6-43f7-a4a5-ad7d3031fc49 name:name
+	*/
+	fs.readFile(process.env.FILE_NAME as string, "utf-8", (err, readedData) => {
+		if (err) {
+			console.error(err);
+			return;
+		}
+		const parsedData: databaseStructure = JSON.parse(readedData);
+		const foundTableById = parsedData.tables.filter((i) => i.id === tableId)[0];
+
+		//const removedElement = foundTableById.tableChildren.filter((i) => i);
+
+		console.log(foundTableById, removeBy);
+		/*
+	fs.writeFile(
+		process.env.FILE_NAME as string,
+		JSON.stringify(contentToSave),
+		(err) => err && console.log({err}),
+	);
+
+	*/
+	});
 };
