@@ -2,14 +2,13 @@ import fs from "fs";
 import {uuid} from "uuidv4";
 import {databaseStructure} from "../../types";
 
-export const databaseBlueprint: databaseStructure = {
-	id: uuid(),
-	databaseName: `${process.env.DATABASE_NAME}-${uuid()}`,
-	tables: [],
-};
-
 export const initializeDatabaseFile = () => {
 	/* Check if file exist - if not just create a new one with blueprint as content */
+	const databaseBlueprint: databaseStructure = {
+		id: uuid(),
+		databaseName: `${process.env.DATABASE_NAME}-${uuid()}`,
+		tables: [],
+	};
 	try {
 		fs.access(process.env.FILE_NAME as string, fs.constants.F_OK, (err) => {
 			if (err) {
