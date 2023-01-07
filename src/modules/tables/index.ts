@@ -12,7 +12,19 @@ export const createTable = async (tableName: string, tableSchema: string) => {
 			return;
 		}
 
-		const tableSchemaProperty = Object.assign({}, ...tableSchema);
+		let tableSchemaProperty = {[tableSchema.split(":")[0]]: tableSchema.split(":")[1]};
+
+		/* Multiple property in schema */
+		if (tableSchema.includes(",")) {
+			tableSchemaProperty = {};
+			tableSchema
+				.split(",")
+				.map(
+					(i) =>
+						(tableSchemaProperty = {...tableSchemaProperty, [i.split(":")[0]]: i.split(":")[1]}),
+				);
+		}
+
 		const parsedData: databaseStructure = JSON.parse(readedData);
 
 		const newTable: tableStructure = {
@@ -26,7 +38,7 @@ export const createTable = async (tableName: string, tableSchema: string) => {
 
 		fs.writeFileSync(process.env.FILE_NAME as string, JSON.stringify(contentToSave));
 
-		console.log("| Created table");
+		console.log(`| Created table with name: ${tableName}`);
 	});
 };
 
@@ -72,7 +84,7 @@ export const deleteTable = async (id: string) => {
 			(err) => err && console.log({err}),
 		);
 
-		console.log("| Deleted table");
+		console.log(`| Deleted table by id: ${id}`);
 	});
 };
 
@@ -92,28 +104,40 @@ export const addElementToTable = (tableId: string, fieldsWithValues: string) => 
 			/*
 				Validate data with tableProperties
 			*/
-
 			const foundTableById = parsedData.tables.filter((i) => i.id === tableId)[0];
 			if (!foundTableById) throw Error(`Not found table by id: ${tableId}`);
 
 			const foundTableByIdSchema = Object.keys(foundTableById.tableSchema);
-			const dataToInsertKeys = Object.keys(Object.assign({}, ...fieldsWithValues));
+
+			let dataToInsertKeys = {[fieldsWithValues.split(":")[0]]: fieldsWithValues.split(":")[1]};
+
+			/* Multiple property in schema */
+			if (fieldsWithValues.includes(",")) {
+				dataToInsertKeys = {};
+				fieldsWithValues.split(",").map(
+					(i) =>
+						(dataToInsertKeys = {
+							...dataToInsertKeys,
+							[i.split(":")[0]]: i.split(":")[1],
+						}),
+				);
+			}
 
 			/* Warning message if we want to add something to id as a key */
-			if (dataToInsertKeys.includes("id")) {
+			if (Object.keys(dataToInsertKeys).includes("id")) {
 				console.log({
 					message: "WARNING",
 					data: "key 'id' will be ignore cause it is a reserved keyword",
 				});
 			}
-			if (!areEqualArray(foundTableByIdSchema, dataToInsertKeys))
+			if (!areEqualArray(foundTableByIdSchema, Object.keys(dataToInsertKeys)))
 				throw Error(
 					`Provided not correct data in table schema: ${Object.keys(
 						foundTableById.tableSchema,
 					)} provided: ${dataToInsertKeys}`,
 				);
 
-			const elementToInsert = {...{id: uuid()}, ...Object.assign({}, ...fieldsWithValues)};
+			const elementToInsert = {...{id: uuid()}, ...dataToInsertKeys};
 			foundTableById.tableChildren = foundTableById.tableChildren.concat(elementToInsert);
 
 			const contentToSave = {
@@ -134,19 +158,17 @@ export const addElementToTable = (tableId: string, fieldsWithValues: string) => 
 				(err) => err && console.log({err}),
 			);
 
-			console.log("| Added element into table");
+			console.log(`| Added element into table by id: ${tableId}`);
 		});
 	} catch (err) {
 		console.error({message: "Found error", data: err});
 	}
 };
 
-export const removeElementFromTable = (tableId: string, removeBy: string) => {
+export const deleteElementFromTable = (tableId: string, removeBy: string) => {
 	/*
 		From which table, and what element:
-		caddd5ab-36c2-4308-a2c5-884a27cf472d name:test
-
-		 --removeElement 631e8499-e7a6-43f7-a4a5-ad7d3031fc49 name:name
+		--removeElement 631e8499-e7a6-43f7-a4a5-ad7d3031fc49 user:smieszek
 	*/
 	fs.readFile(process.env.FILE_NAME as string, "utf-8", (err, readedData) => {
 		if (err) {
@@ -156,16 +178,27 @@ export const removeElementFromTable = (tableId: string, removeBy: string) => {
 		const parsedData: databaseStructure = JSON.parse(readedData);
 		const foundTableById = parsedData.tables.filter((i) => i.id === tableId)[0];
 
-		//const removedElement = foundTableById.tableChildren.filter((i) => i);
+		foundTableById.tableChildren = foundTableById.tableChildren.filter((i: any) => {
+			const splited = removeBy.split(":");
+			return i[splited[0]] != splited[1];
+		});
 
-		console.log(foundTableById, removeBy);
-		/*
-	fs.writeFile(
-		process.env.FILE_NAME as string,
-		JSON.stringify(contentToSave),
-		(err) => err && console.log({err}),
-	);
+		const contentToSave = {
+			...parsedData,
+			tables: parsedData.tables.filter((i) => {
+				if (i.id === foundTableById.id) {
+					i = foundTableById;
+					return i;
+				}
+				return i;
+			}),
+		};
+		fs.writeFile(
+			process.env.FILE_NAME as string,
+			JSON.stringify(contentToSave),
+			(err) => err && console.log({err}),
+		);
 
-	*/
+		console.log(`| Removed element from table by id: ${tableId}`);
 	});
 };

@@ -6,7 +6,7 @@ import {
 	showTables,
 	deleteTable,
 	addElementToTable,
-	removeElementFromTable,
+	deleteElementFromTable,
 } from "../tables";
 import {helpCommand} from "../../modules/helpCommand";
 
@@ -19,7 +19,7 @@ export const acceptableCommands = [
 	"createTable",
 	"deleteTable",
 	"addElement",
-	"removeElement",
+	"deleteElement",
 ];
 
 const rl = readline.createInterface({input, terminal: true, output: process.stdout});
@@ -112,8 +112,8 @@ export const commandMenu = async () => {
 					case "addElement":
 						addElementToTable(firstArgumentValue, secondArgumentValue);
 
-					case "removeElement":
-						removeElementFromTable(firstArgumentValue, secondArgumentValue);
+					case "deleteElement":
+						deleteElementFromTable(firstArgumentValue, secondArgumentValue);
 				}
 			} else {
 				console.log({
