@@ -1,9 +1,10 @@
 import fs from "fs";
+import {Socket} from "socket.io";
 import {tableStructure, databaseStructure} from "../../types";
 import {uuid} from "uuidv4";
 import {areEqualArray} from "../../common";
 
-export const createTable = async (tableName: string, tableSchema: string) => {
+export const createTable = async (tableName: string, tableSchema: string, socket?: Socket) => {
 	/* Read current tables from file */
 
 	fs.readFile(process.env.FILE_NAME as string, "utf-8", async (err, readedData) => {
@@ -38,11 +39,14 @@ export const createTable = async (tableName: string, tableSchema: string) => {
 
 		fs.writeFileSync(process.env.FILE_NAME as string, JSON.stringify(contentToSave));
 
-		console.log(`| Created table with name: ${tableName}`);
+		console.log({message: `| Created table with name: ${tableName}`});
+		socket?.emit("main", {message: `| Created table with name: ${tableName}`});
+
+		return {message: `| Created table with name: ${tableName}`};
 	});
 };
 
-export const showTable = async (id: string) => {
+export const showTable = async (id: string, socket?: Socket) => {
 	fs.readFile(process.env.FILE_NAME as string, "utf-8", (err, readedData) => {
 		if (err) {
 			console.error(err);
@@ -50,25 +54,41 @@ export const showTable = async (id: string) => {
 		}
 		const parsedData: databaseStructure = JSON.parse(readedData);
 
-		console.log(`| Show table by id: ${id}`);
 		const foundTable = parsedData.tables.filter((i) => i.id === id)[0];
-		console.log(foundTable ? foundTable : "NOT_FOUND");
+		console.log(
+			foundTable
+				? {message: `| Show table by id: ${id}`, table: foundTable}
+				: {message: "NOT FOUND"},
+		);
+		socket?.emit(
+			"main",
+			foundTable
+				? {message: `| Show table by id: ${id}`, table: foundTable}
+				: {message: "NOT FOUND"},
+		);
+
+		return foundTable
+			? {message: `| Show table by id: ${id}`, table: foundTable}
+			: {message: "NOT FOUND"};
 	});
 };
 
-export const showTables = async () => {
+export const showTables = async (socket?: Socket) => {
 	fs.readFile(process.env.FILE_NAME as string, "utf-8", (err, readedData) => {
 		if (err) {
 			console.error({err});
 			return;
 		}
 		const parsedData: databaseStructure = JSON.parse(readedData);
-		console.log(`| Show all tables`);
-		console.log(parsedData.tables);
+
+		console.log({message: "| Show all tables", tables: parsedData.tables});
+		socket?.emit("main", {message: "| Show all tables", tables: parsedData.tables});
+
+		return {message: "| Show all tables", tables: parsedData.tables};
 	});
 };
 
-export const deleteTable = async (id: string) => {
+export const deleteTable = async (id: string, socket?: Socket) => {
 	fs.readFile(process.env.FILE_NAME as string, "utf-8", (err, readedData) => {
 		if (err) {
 			console.error(err);
@@ -84,11 +104,14 @@ export const deleteTable = async (id: string) => {
 			(err) => err && console.log({err}),
 		);
 
-		console.log(`| Deleted table by id: ${id}`);
+		console.log({message: `| Deleted table by id: ${id}`});
+		socket?.emit("main", {message: `| Deleted table by id: ${id}`});
+
+		return {message: `| Deleted table by id: ${id}`};
 	});
 };
 
-export const addElementToTable = (tableId: string, fieldsWithValues: string) => {
+export const addElementToTable = (tableId: string, fieldsWithValues: string, socket?: Socket) => {
 	/*
 		Example test command:
 		--addElement c4b92817-ca26-4d45-882c-833dc9c4a96e firstName:test1,secondName:test2
@@ -158,14 +181,20 @@ export const addElementToTable = (tableId: string, fieldsWithValues: string) => 
 				(err) => err && console.log({err}),
 			);
 
-			console.log(`| Added element into table by id: ${tableId}`);
+			console.log({message: `| Added element into table by id: ${tableId}`});
+			socket?.emit("main", {message: `| Added element into table by id: ${tableId}`});
+
+			return {message: `| Added element into table by id: ${tableId}`};
 		});
 	} catch (err) {
 		console.error({message: "Found error", data: err});
+		socket?.emit("main", {message: "Found error", data: err});
+
+		return {message: "Found error", data: err};
 	}
 };
 
-export const deleteElementFromTable = (tableId: string, removeBy: string) => {
+export const deleteElementFromTable = (tableId: string, removeBy: string, socket?: Socket) => {
 	/*
 		From which table, and what element:
 		--removeElement 631e8499-e7a6-43f7-a4a5-ad7d3031fc49 user:smieszek
@@ -199,11 +228,14 @@ export const deleteElementFromTable = (tableId: string, removeBy: string) => {
 			(err) => err && console.log({err}),
 		);
 
-		console.log(`| Removed element from table by id: ${tableId}`);
+		console.log({message: `| Removed element from table by id: ${tableId}`});
+		socket?.emit("main", {message: `| Removed element from table by id: ${tableId}`});
+
+		return {message: `| Removed element from table by id: ${tableId}`};
 	});
 };
 
-export const joinTables = (firstTableId: string, secondTableId: string) => {
+export const joinTables = (firstTableId: string, secondTableId: string, socket?: Socket) => {
 	// --joinTables 284b0b66-4310-47f7-ac8c-c4b8dbb37270 70c85173-be0a-41e5-9504-2681c92f42e6
 	fs.readFile(process.env.FILE_NAME as string, "utf-8", (err, readedData) => {
 		if (err) {
@@ -220,6 +252,15 @@ export const joinTables = (firstTableId: string, secondTableId: string) => {
 			tablesChildren: [...foundFirstTable.tableChildren, ...foundSecondTable.tableChildren],
 		};
 
-		console.log(result);
+		console.log({
+			message: `Joined tables by id: ${firstTableId} and ${secondTableId}`,
+			data: result,
+		});
+		socket?.emit("main", {
+			message: `Joined tables by id: ${firstTableId} and ${secondTableId}`,
+			data: result,
+		});
+
+		return {message: `Joined tables by id: ${firstTableId} and ${secondTableId}`, data: result};
 	});
 };
