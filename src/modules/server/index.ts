@@ -30,7 +30,6 @@ export const server = async () => {
 			const typedArguments = argumentsList(data);
 
 			typedArguments.map(async (command) => {
-				let socketResponse: any = "";
 				const commandKey = command[0] as string;
 				const firstArgumentValue = command[1] as string;
 				const secondArgumentValue = command[2] as string;
@@ -78,8 +77,6 @@ export const server = async () => {
 						data: {command, commandKey, firstArgumentValue, secondArgumentValue},
 					});
 				}
-				console.log("socketResponse", socketResponse);
-				socket.emit("main", socketResponse);
 			});
 		});
 	});
