@@ -7,6 +7,7 @@ import {
 	deleteTable,
 	addElementToTable,
 	deleteElementFromTable,
+	joinTables,
 } from "../tables";
 import {helpCommand} from "../../modules/helpCommand";
 
@@ -20,6 +21,7 @@ export const acceptableCommands = [
 	"deleteTable",
 	"addElement",
 	"deleteElement",
+	"joinTables",
 ];
 
 const rl = readline.createInterface({input, terminal: true, output: process.stdout});
@@ -114,6 +116,9 @@ export const commandMenu = async () => {
 
 					case "deleteElement":
 						deleteElementFromTable(firstArgumentValue, secondArgumentValue);
+
+					case "joinTables":
+						joinTables(firstArgumentValue, secondArgumentValue);
 				}
 			} else {
 				console.log({

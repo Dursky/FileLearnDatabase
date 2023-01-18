@@ -202,3 +202,24 @@ export const deleteElementFromTable = (tableId: string, removeBy: string) => {
 		console.log(`| Removed element from table by id: ${tableId}`);
 	});
 };
+
+export const joinTables = (firstTableId: string, secondTableId: string) => {
+	// --joinTables 284b0b66-4310-47f7-ac8c-c4b8dbb37270 70c85173-be0a-41e5-9504-2681c92f42e6
+	fs.readFile(process.env.FILE_NAME as string, "utf-8", (err, readedData) => {
+		if (err) {
+			console.error(err);
+			return;
+		}
+		const parsedData: databaseStructure = JSON.parse(readedData);
+
+		const foundFirstTable = parsedData.tables.filter((i) => i.id === firstTableId)[0];
+		const foundSecondTable = parsedData.tables.filter((i) => i.id === secondTableId)[0];
+
+		const result = {
+			joinedTables: `id: ${firstTableId}, id: ${secondTableId}`,
+			tablesChildren: [...foundFirstTable.tableChildren, ...foundSecondTable.tableChildren],
+		};
+
+		console.log(result);
+	});
+};
