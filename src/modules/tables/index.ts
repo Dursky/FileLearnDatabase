@@ -2,7 +2,7 @@ import fs from "fs";
 import {Socket} from "socket.io";
 import {tableStructure, databaseStructure} from "../../types";
 import {uuid} from "uuidv4";
-import {areEqualArray} from "../../common";
+import {areEqualArray, checkValidationSchema} from "../../validation";
 
 export const createTable = async (tableName: string, tableSchema: string, socket?: Socket) => {
 	/* Read current tables from file */
@@ -12,7 +12,6 @@ export const createTable = async (tableName: string, tableSchema: string, socket
 			console.error(err);
 			return;
 		}
-
 		let tableSchemaProperty = {[tableSchema.split(":")[0]]: tableSchema.split(":")[1]};
 
 		/* Multiple property in schema */
@@ -41,8 +40,6 @@ export const createTable = async (tableName: string, tableSchema: string, socket
 
 		console.log({message: `| Created table with name: ${tableName}`});
 		socket?.emit("main", {message: `| Created table with name: ${tableName}`});
-
-		return {message: `| Created table with name: ${tableName}`};
 	});
 };
 
@@ -55,25 +52,17 @@ export const showTable = async (id: string, socket?: Socket) => {
 		const parsedData: databaseStructure = JSON.parse(readedData);
 
 		const foundTable = parsedData.tables.filter((i) => i.id === id)[0];
-		console.log(
-			foundTable
-				? {message: `| Show table by id: ${id}`, table: foundTable}
-				: {message: "NOT FOUND"},
-		);
+		console.log(foundTable);
 		socket?.emit(
 			"main",
 			foundTable
 				? {message: `| Show table by id: ${id}`, table: foundTable}
 				: {message: "NOT FOUND"},
 		);
-
-		return foundTable
-			? {message: `| Show table by id: ${id}`, table: foundTable}
-			: {message: "NOT FOUND"};
 	});
 };
 
-export const showTables = async (socket?: Socket) => {
+export const showTables = async (socket?: Socket): Promise<void> => {
 	fs.readFile(process.env.FILE_NAME as string, "utf-8", (err, readedData) => {
 		if (err) {
 			console.error({err});
@@ -83,12 +72,10 @@ export const showTables = async (socket?: Socket) => {
 
 		console.log({message: "| Show all tables", tables: parsedData.tables});
 		socket?.emit("main", {message: "| Show all tables", tables: parsedData.tables});
-
-		return {message: "| Show all tables", tables: parsedData.tables};
 	});
 };
 
-export const deleteTable = async (id: string, socket?: Socket) => {
+export const deleteTable = async (id: string, socket?: Socket): Promise<void> => {
 	fs.readFile(process.env.FILE_NAME as string, "utf-8", (err, readedData) => {
 		if (err) {
 			console.error(err);
@@ -106,12 +93,14 @@ export const deleteTable = async (id: string, socket?: Socket) => {
 
 		console.log({message: `| Deleted table by id: ${id}`});
 		socket?.emit("main", {message: `| Deleted table by id: ${id}`});
-
-		return {message: `| Deleted table by id: ${id}`};
 	});
 };
 
-export const addElementToTable = (tableId: string, fieldsWithValues: string, socket?: Socket) => {
+export const addElementToTable = async (
+	tableId: string,
+	fieldsWithValues: string,
+	socket?: Socket,
+): Promise<void> => {
 	/*
 		Example test command:
 		--addElement c4b92817-ca26-4d45-882c-833dc9c4a96e firstName:test1,secondName:test2
@@ -155,10 +144,14 @@ export const addElementToTable = (tableId: string, fieldsWithValues: string, soc
 			}
 			if (!areEqualArray(foundTableByIdSchema, Object.keys(dataToInsertKeys)))
 				throw Error(
-					`Provided not correct data in table schema: ${Object.keys(
+					`Provided not the same key, key: ${Object.keys(
 						foundTableById.tableSchema,
 					)} provided: ${dataToInsertKeys}`,
 				);
+
+			if (!checkValidationSchema(foundTableById, dataToInsertKeys)) {
+				throw Error("Provided data is not correct like in table schema");
+			}
 
 			const elementToInsert = {...{id: uuid()}, ...dataToInsertKeys};
 			foundTableById.tableChildren = foundTableById.tableChildren.concat(elementToInsert);
@@ -183,18 +176,18 @@ export const addElementToTable = (tableId: string, fieldsWithValues: string, soc
 
 			console.log({message: `| Added element into table by id: ${tableId}`});
 			socket?.emit("main", {message: `| Added element into table by id: ${tableId}`});
-
-			return {message: `| Added element into table by id: ${tableId}`};
 		});
 	} catch (err) {
 		console.error({message: "Found error", data: err});
 		socket?.emit("main", {message: "Found error", data: err});
-
-		return {message: "Found error", data: err};
 	}
 };
 
-export const deleteElementFromTable = (tableId: string, removeBy: string, socket?: Socket) => {
+export const deleteElementFromTable = async (
+	tableId: string,
+	removeBy: string,
+	socket?: Socket,
+): Promise<void> => {
 	/*
 		From which table, and what element:
 		--removeElement 631e8499-e7a6-43f7-a4a5-ad7d3031fc49 user:smieszek
@@ -207,6 +200,7 @@ export const deleteElementFromTable = (tableId: string, removeBy: string, socket
 		const parsedData: databaseStructure = JSON.parse(readedData);
 		const foundTableById = parsedData.tables.filter((i) => i.id === tableId)[0];
 
+		if (!foundTableById) throw Error(`Not found table by id: ${tableId}`);
 		foundTableById.tableChildren = foundTableById.tableChildren.filter((i: any) => {
 			const splited = removeBy.split(":");
 			return i[splited[0]] != splited[1];
@@ -230,12 +224,14 @@ export const deleteElementFromTable = (tableId: string, removeBy: string, socket
 
 		console.log({message: `| Removed element from table by id: ${tableId}`});
 		socket?.emit("main", {message: `| Removed element from table by id: ${tableId}`});
-
-		return {message: `| Removed element from table by id: ${tableId}`};
 	});
 };
 
-export const joinTables = (firstTableId: string, secondTableId: string, socket?: Socket) => {
+export const joinTables = async (
+	firstTableId: string,
+	secondTableId: string,
+	socket?: Socket,
+): Promise<void> => {
 	// --joinTables 284b0b66-4310-47f7-ac8c-c4b8dbb37270 70c85173-be0a-41e5-9504-2681c92f42e6
 	fs.readFile(process.env.FILE_NAME as string, "utf-8", (err, readedData) => {
 		if (err) {
@@ -249,7 +245,10 @@ export const joinTables = (firstTableId: string, secondTableId: string, socket?:
 
 		const result = {
 			joinedTables: `id: ${firstTableId}, id: ${secondTableId}`,
-			tablesChildren: [...foundFirstTable.tableChildren, ...foundSecondTable.tableChildren],
+			tablesChildren: [
+				foundFirstTable ? [...foundFirstTable.tableChildren] : [],
+				foundSecondTable ? [...foundSecondTable.tableChildren] : [],
+			],
 		};
 
 		console.log({
@@ -260,7 +259,5 @@ export const joinTables = (firstTableId: string, secondTableId: string, socket?:
 			message: `Joined tables by id: ${firstTableId} and ${secondTableId}`,
 			data: result,
 		});
-
-		return {message: `Joined tables by id: ${firstTableId} and ${secondTableId}`, data: result};
 	});
 };

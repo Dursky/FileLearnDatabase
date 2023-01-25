@@ -64,15 +64,22 @@ export const server = async () => {
 
 						case "addElement":
 							addElementToTable(firstArgumentValue, secondArgumentValue, socket);
+							break;
 
 						case "deleteElement":
 							deleteElementFromTable(firstArgumentValue, secondArgumentValue, socket);
+							break;
 
 						case "joinTables":
 							joinTables(firstArgumentValue, secondArgumentValue, socket);
+							break;
 					}
 				} else {
 					console.log({
+						message: "Not recognized command, provided:",
+						data: {command, commandKey, firstArgumentValue, secondArgumentValue},
+					});
+					socket.emit("main", {
 						message: "Not recognized command, provided:",
 						data: {command, commandKey, firstArgumentValue, secondArgumentValue},
 					});

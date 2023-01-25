@@ -5,7 +5,8 @@
 	"repository": "https://github.com/Dursky/FileLearnDatabase.git",
 	"author": "Dursky",
 	"scripts": {
-		"dev": "nodemon -I --watch './**/*.ts' --exec 'ts-node' src/main.ts"
+		"dev": "nodemon -I --watch './**/*.ts' --exec 'ts-node' src/main.ts",
+		"dev-gui": "yarn run dev && cd gui-interface && yarn run start"
 	},
 	"license": "MIT",
 	"dependencies": {

@@ -87,7 +87,6 @@ export const commandMenu = async () => {
 			/* TODO: Get a multiple value for command */
 			if (acceptableCommands.includes(commandKey)) {
 				/* Correct command from list*/
-
 				switch (commandKey) {
 					case "help":
 						helpCommand();
